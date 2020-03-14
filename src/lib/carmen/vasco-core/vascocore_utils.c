@@ -58,6 +58,8 @@ static int w_units;
  *      Returns pointer.
  */
 
+/* 任意次元の配列用のメモリを動的確保
+ * widthは各要素のバイト数 */
 void *
 carmen_mdalloc(int ndim, int width, ...)
 {
@@ -82,6 +84,11 @@ carmen_mdalloc(int ndim, int width, ...)
   w_units = width;    /* global used by md2 and md3 */
 
   /* allocate required pointer and array element storage */
+  /* (3, 4, 5)の3次元配列を確保する場合
+   * tipは要素数3の配列へのポインタ, tip[0]は要素数12の配列へのポインタ,
+   * tip[0][0]は要素数60の配列へのポインタを指し, md2()によって割り当てられる
+   * それ以外のポインタは, md3()によって割り当てられる
+   * tip[1], tip[2], tip[0][1-3], tip[1-2][0-3]などは, md3()によって割り当てられる */
 
   tip = (char ***)md2(dims[0], ndim, &dims[1]);
 
@@ -96,16 +103,17 @@ carmen_mdalloc(int ndim, int width, ...)
  *          frees storage obtained by mdalloc
  */
 
+/* 任意次元の配列用のメモリを開放 */
 void
 carmen_mdfree(void *tip, int ndim)
 {
   if(ndim == 1)
     free(tip);
   else
-    {
-      carmen_mdfree(((void **)tip)[0], ndim-1);
-      free(tip);
-    }
+  {
+    carmen_mdfree(((void **)tip)[0], ndim-1);
+    free(tip);
+  }
 }
 
 /* md2:  allocates storage for n-way indirect pointer arrays
@@ -121,24 +129,20 @@ md2(int n_units, int ndim, int *dims)
     /* recursed to final dimension - allocate element storage */
     tip = malloc(n_units*w_units);
     carmen_test_alloc(tip);
-  }
-  else
-    {
-      /* allocate pointer array for dimension n */
-      tip = malloc(n_units*sizeof(char *));
-      carmen_test_alloc(tip);
-      if(tip)
-	{
-	  /* recurse until final dimension */
-	  tip[0] = (char *)md2(n_units*dims[0], ndim-1, &dims[1]);
-	  if(tip[0] == NULL)
-	    {
+  } else {
+    /* allocate pointer array for dimension n */
+    tip = malloc(n_units*sizeof(char *));
+    carmen_test_alloc(tip);
+    if (tip) {
+      /* recurse until final dimension */
+      tip[0] = (char *)md2(n_units*dims[0], ndim-1, &dims[1]);
+      if (tip[0] == NULL) {
                         /* allocate error - fall back up freeing everything */
-	      free(tip);
-	      tip = NULL;
-	    }
-	}
+        free(tip);
+        tip = NULL;
+      }
     }
+  }
   return (void **)tip;
 }
 
@@ -149,34 +153,36 @@ md3(char ***tip, int n_units, int ndim, int *dims)
 {
   int i;
 
-  for(i=1; i<n_units; i++)
-    {
-      if(ndim == 1)
-	/* final dimension - must scale by element width */
-	tip[i] = (char **)((char *)tip[0] + i*dims[0]*w_units);
-      else
-	/* intermediate dimension - scale by pointer size */
-	tip[i] = tip[0] + i*dims[0];
-    }
+  for(i=1; i<n_units; i++) {
+    if(ndim == 1)
+      /* final dimension - must scale by element width */
+      tip[i] = (char **)((char *)tip[0] + i*dims[0]*w_units);
+    else
+      /* intermediate dimension - scale by pointer size */
+      tip[i] = tip[0] + i*dims[0];
+  }
   if(ndim > 1)
-            /* not at final dimension - continue to recurse */
+    /* not at final dimension - continue to recurse */
     md3((char ***)tip[0], n_units*dims[0], ndim-1, &dims[1]);
 }
 
 /*********************************************************************/
 
+/* ベクトル間の距離を計算 */
 double
 carmen_vec_distance( carmen_vec2_t p1, carmen_vec2_t p2 ) {
   return sqrt( (p1.x-p2.x)*(p1.x-p2.x) +
 	       (p1.y-p2.y)*(p1.y-p2.y) );
 }
 
+/* ベクトルのノルムを計算 */
 double
 carmen_vec_length( carmen_vec2_t v1 )
 {
   return( sqrt( (v1.x*v1.x) + (v1.y*v1.y) ) );
 }
 
+/* 2つの姿勢間の距離を計算 */
 double
 carmen_point_dist( carmen_point_t pos1, carmen_point_t pos2 )
 {
@@ -186,7 +192,7 @@ carmen_point_dist( carmen_point_t pos1, carmen_point_t pos2 )
 	 );
 }
 
-
+/* 移動距離を計算 */
 double
 carmen_move_length( carmen_move_t move )
 {
@@ -196,6 +202,7 @@ carmen_move_length( carmen_move_t move )
 	 );
 }
 
+/* スキャンデータの距離と角度を直交座標系に変換 */
 carmen_vec2_t
 carmen_laser_point( carmen_point_t rpos, double val, double angle )
 {
@@ -207,6 +214,7 @@ carmen_laser_point( carmen_point_t rpos, double val, double angle )
   return(abspt);
 }
 
+/* ガウス関数の値を計算 */
 double
 carmen_gauss( double x, double mu, double sigma )
 {
@@ -220,13 +228,16 @@ carmen_gauss( double x, double mu, double sigma )
 	 exp(-(((x-mu)*(x-mu))/(2*sigma*sigma))) );
 }
 
+/* ガウスカーネルの係数を計算 */
 carmen_gauss_kernel_t
-carmen_gauss_kernel(int length )
+carmen_gauss_kernel( int length )
 {
   carmen_gauss_kernel_t  kernel;
   int i, j, *store, sum = 0;
   store = (int *) malloc( length*sizeof(int) );
   carmen_test_alloc(store);
+
+  /* lengthが5であれば, (1, 4, 6, 4, 1)がstoreに格納される */
   store[0] = 1;
   for ( i=0; i<length-1; i++ ) {
     store[i+1] = 1;
@@ -234,6 +245,7 @@ carmen_gauss_kernel(int length )
       store[j] = store[j] + store[j-1];
     }
   }
+
   for ( i=0; i<length; i++ ) {
     sum += store[i];
   }
@@ -247,6 +259,8 @@ carmen_gauss_kernel(int length )
   return(kernel);
 }
 
+/* 2つの角度の差分を計算
+ * -M_PIからM_PIまでの範囲に収める */
 double
 carmen_orientation_diff( double start, double end ) {
   double diff;
@@ -262,6 +276,7 @@ carmen_orientation_diff( double start, double end ) {
   }
 }
 
+/* 移動後の姿勢を計算 */
 carmen_point_t
 carmen_point_with_move( carmen_point_t start, carmen_move_t move )
 {
@@ -281,6 +296,7 @@ carmen_point_with_move( carmen_point_t start, carmen_move_t move )
   return(end);
 }
 
+/* 原点から移動後の姿勢を計算 */
 carmen_point_t
 carmen_point_from_move( carmen_move_t move )
 {
@@ -295,6 +311,7 @@ carmen_point_from_move( carmen_move_t move )
   return(end);
 }
 
+/* 移動量と移動後の姿勢から, 移動前の姿勢を計算 */
 carmen_point_t
 carmen_point_backwards_with_move( carmen_point_t start, carmen_move_t move )
 {
@@ -316,6 +333,7 @@ carmen_point_backwards_with_move( carmen_point_t start, carmen_move_t move )
   return(end);
 }
 
+/* 逆方向の移動量を計算 */
 carmen_point_t
 carmen_point_backwards_from_move( carmen_move_t move )
 {
@@ -334,6 +352,7 @@ carmen_point_backwards_from_move( carmen_move_t move )
   return(end);
 }
 
+/* 移動前後の姿勢から移動量を計算 */
 carmen_move_t
 carmen_move_between_points( carmen_point_t start, carmen_point_t end )
 {
