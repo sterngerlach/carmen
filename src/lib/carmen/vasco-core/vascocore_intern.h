@@ -40,41 +40,64 @@
 
 typedef struct carmen_vascocore_quad_tree_t {
   
+  /* 右上, 左上, 左下, 右下の子ノード */
   struct carmen_vascocore_quad_tree_t  * elem[4];
+  /* 領域の中心のインデックスを, 2倍にした値 */
   carmen_svec2_t                         center;
+  /* ノードの深さ */
   unsigned char                          level;
+  /* ノードの使用状態(0: 未使用, 1: 使用) */
   unsigned char                          inuse;
 
 } carmen_vascocore_quad_tree_t;
 
+/* 占有格子地図を表す構造体 */
 typedef struct {
   
+  /* 地図をカバーする4分木 */
   carmen_vascocore_quad_tree_t           qtree;
   carmen_point_t                         offset;
+  /* 各格子のサイズ */
   double                                 resolution;
+  /* 畳み込みの中間結果(calc)の状態 */
   unsigned char                       ** updated;
+  /* 各格子にスキャンデータがヒットした(当たった)回数 */
   float                               ** maphit;
+  /* 各格子にスキャンデータがヒット(当たった)および
+   * ミスした(格子上をスキャンデータが通過した)回数の合計
+   * 各格子がスキャンによって参照された回数 */
   short                               ** mapsum;
+  /* 各格子の占有確率(ヒットした回数と参照回数との比率 */
   float                               ** mapprob;
+  /* 畳み込みの中間結果の値 */
   float                               ** calc;
+  /* 地図の半径(横方向と縦方向の格子数の半分) */
   carmen_ivec2_t                         mapsize;
+  /* 地図の中心の座標 */
   carmen_vec2_t                          center;
 
 } carmen_vascocore_map_t, *carmen_vascocore_map_p;
 
+/* スキャンデータを表す構造体 */
 typedef struct {
 
   double                                 time;
+  /* スキャンデータ取得時のセンサの位置 */
   carmen_point_t                         estpos;
   double                                 fov;
   int                                    numvalues;
+  /* センサの中心からの距離 */
   double                               * val;
+  /* センサの中心からの角度 */
   double                               * angle;
+  /* 直交座標系での表現 */
   carmen_vec2_t                        * coord;
+  /* スキャンデータを囲むバウンディングボックス */
   carmen_bbox_t                          bbox;
 
 } carmen_vascocore_extd_laser_t;
 
+/* スキャンデータの履歴を表す構造体 */
 typedef struct {
   
   int                                    started;
