@@ -35,6 +35,7 @@ carmen_vascocore_param_t      carmen_vascocore_settings;
 carmen_vascocore_map_t        carmen_vascocore_map;
 carmen_vascocore_history_t    carmen_vascocore_history;
 
+/* レーザスキャナの種類に応じてパラメータを設定 */
 void
 vascocore_get_default_params( carmen_vascocore_param_p param, char *laser_type )
 {
@@ -139,6 +140,7 @@ vascocore_get_default_params( carmen_vascocore_param_p param, char *laser_type )
   }
 }
 
+/* レーザスキャナの種類を取得してパラメータを設定 */
 void
 vascocore_get_params( int argc, char **argv, carmen_vascocore_param_p param )
 {
@@ -157,6 +159,7 @@ vascocore_get_params( int argc, char **argv, carmen_vascocore_param_p param )
   vascocore_get_default_params(param, laser_type);
 }
 
+/* 局所地図を初期化 */
 void
 vascocore_initialize_maps( carmen_vascocore_map_t *local_map  )
 {
@@ -167,6 +170,7 @@ vascocore_initialize_maps( carmen_vascocore_map_t *local_map  )
     fprintf( stderr, "*        MAPS\n" );
     fprintf( stderr, "***************************************\n" );
   }
+  /* 局所地図の縦方向と横方向の格子数を計算 */
   size_x = (int) ceil((carmen_vascocore_settings.local_map_max_range)/
 		      carmen_vascocore_settings.local_map_resolution);
   size_y = (int) ceil((carmen_vascocore_settings.local_map_max_range)/
@@ -175,6 +179,7 @@ vascocore_initialize_maps( carmen_vascocore_map_t *local_map  )
     fprintf( stderr, "* INFO: create -local- map: %d x %d\n",
 	     2*size_x, size_y );
   }
+  /* 局所地図を初期化 */
   initialize_map( local_map, 2*size_x, size_y, 60, size_y/2,
 		  carmen_vascocore_settings.local_map_resolution, npos );
   if (carmen_vascocore_settings.verbose) {
@@ -182,7 +187,7 @@ vascocore_initialize_maps( carmen_vascocore_map_t *local_map  )
   }
 }
 
-
+/* スキャンデータの履歴を初期化 */
 void
 vascocore_alloc_history( carmen_vascocore_history_t * history )
 {
@@ -226,6 +231,7 @@ vascocore_alloc_history( carmen_vascocore_history_t * history )
   history->ptr    = 0;
 }
 
+/* スキャンマッチングモジュール(Vasco)の初期化 */
 void
 vascocore_init( int argc, char **argv )
 {
@@ -235,6 +241,7 @@ vascocore_init( int argc, char **argv )
   carmen_vascocore_history.started = 0;
 }
 
+/* スキャンマッチングモジュール(Vasco)の初期化 */
 void
 vascocore_init_no_ipc(carmen_vascocore_param_t *new_settings)
 {
@@ -243,6 +250,7 @@ vascocore_init_no_ipc(carmen_vascocore_param_t *new_settings)
   vascocore_alloc_history( &carmen_vascocore_history );
 }
 
+/* スキャンデータの履歴をリセット */
 void
 vascocore_reset()
 {
