@@ -44,9 +44,11 @@
 extern "C" {
 #endif
 
+/*
 #ifndef _SYS_TIME_H
 #include <sys/time.h>
 #endif
+*/
 
 #include "global.h"
 
@@ -96,6 +98,10 @@ typedef struct {
 
 } carmen_svec2_t;
 
+/*
+ * 移動量を表すための構造体
+ * sidewardメンバはy軸とは逆方向であることに注意
+ */
 typedef struct {
 
   double                    forward;
@@ -104,6 +110,10 @@ typedef struct {
 
 } carmen_move_t;
 
+/*
+ * ガウスカーネルを表す構造体
+ * 各要素は正規化されていないことに注意
+ */
 typedef struct {
 
   int                       len;
@@ -111,6 +121,9 @@ typedef struct {
 
 } carmen_gauss_kernel_t;
 
+/*
+ * バウンディングボックスを表す構造体
+ */
 typedef struct {
 
   carmen_vec2_t             min;
